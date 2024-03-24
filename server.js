@@ -89,7 +89,7 @@ router.post('/signin', function (req, res) {
 });
 
 
-
+// Get and post but for all movies
 router.route('/movies')
 
     .post(requireAuth, function(req, res) {
@@ -116,13 +116,13 @@ router.route('/movies')
 
 
 
-// Routes but by id 
-router.route('/movies/:id')
+// Routes but by title
+router.route('/movies/:title')
     .get(requireAuth, function(req, res) {
-        var id = req.params.id;
-        Movie.findById(id, function(err, movie) {
+        var title = req.params.title;
+        Movie.findOne({ title: title }, function(err, movie) {
             if (err) {
-                res.status(404).json({ success: false, message: 'Movie not found', error: err });
+                res.status(500).json({ success: false, message: 'Internal server error', error: err });
             } else if (!movie) {
                 res.status(404).json({ success: false, message: 'Movie not found' });
             } else {
@@ -132,8 +132,8 @@ router.route('/movies/:id')
     })
 
     .put(requireAuth, function(req, res) {
-        var id = req.params.id;
-        Movie.findByIdAndUpdate(id, req.body, { new: true }, function(err, updatedMovie) {
+        var title = req.params.title;
+        Movie.findOneAndUpdate({ title: title }, req.body, { new: true }, function(err, updatedMovie) {
             if (err) {
                 res.status(400).json({ success: false, message: 'Failed to update movie', error: err });
             } else if (!updatedMovie) {
@@ -145,8 +145,8 @@ router.route('/movies/:id')
     })
 
     .delete(requireAuth, function(req, res) {
-        var id = req.params.id;
-        Movie.findByIdAndDelete(id, function(err, deletedMovie) {
+        var title = req.params.title;
+        Movie.findOneAndDelete({ title: title }, function(err, deletedMovie) {
             if (err) {
                 res.status(400).json({ success: false, message: 'Failed to delete movie', error: err });
             } else if (!deletedMovie) {
@@ -156,6 +156,7 @@ router.route('/movies/:id')
             }
         });
     });
+
 
 
 
