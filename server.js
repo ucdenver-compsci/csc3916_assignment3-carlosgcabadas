@@ -23,6 +23,8 @@ app.use(passport.initialize());
 
 var router = express.Router();
 
+var requireAuth = authJwtController.isAuthenticated; // Just for adding the jwt auth to Movies
+
 function getJSONObjectForMovieRequirement(req) {
     var json = {
         headers: "No headers",
@@ -85,6 +87,78 @@ router.post('/signin', function (req, res) {
         })
     })
 });
+
+
+
+router.route('/movies')
+
+    .post(requireAuth, function(req, res) {
+        var movie = new Movie(req.body);
+        movie.save(function(err, savedMovie) {
+            if (err) {
+                res.status(400).json({ success: false, message: 'Failed to create movie', error: err });
+            } else {
+                res.status(201).json({ success: true, message: 'Movie created successfully', movie: savedMovie });
+            }
+        });
+    })
+
+    .get(requireAuth, function(req, res) {
+        Movie.find({}, function(err, movies) {
+            if (err) {
+                res.status(500).json({ success: false, message: 'Failed to retrieve movies', error: err });
+            } else {
+                res.status(200).json({ success: true, movies: movies });
+            }
+        });
+    });
+
+
+
+
+// Routes but by id 
+router.route('/movies/:id')
+    .get(requireAuth, function(req, res) {
+        var id = req.params.id;
+        Movie.findById(id, function(err, movie) {
+            if (err) {
+                res.status(404).json({ success: false, message: 'Movie not found', error: err });
+            } else if (!movie) {
+                res.status(404).json({ success: false, message: 'Movie not found' });
+            } else {
+                res.status(200).json({ success: true, movie: movie });
+            }
+        });
+    })
+
+    .put(requireAuth, function(req, res) {
+        var id = req.params.id;
+        Movie.findByIdAndUpdate(id, req.body, { new: true }, function(err, updatedMovie) {
+            if (err) {
+                res.status(400).json({ success: false, message: 'Failed to update movie', error: err });
+            } else if (!updatedMovie) {
+                res.status(404).json({ success: false, message: 'Movie not found' });
+            } else {
+                res.status(200).json({ success: true, message: 'Movie updated successfully', movie: updatedMovie });
+            }
+        });
+    })
+
+    .delete(requireAuth, function(req, res) {
+        var id = req.params.id;
+        Movie.findByIdAndDelete(id, function(err, deletedMovie) {
+            if (err) {
+                res.status(400).json({ success: false, message: 'Failed to delete movie', error: err });
+            } else if (!deletedMovie) {
+                res.status(404).json({ success: false, message: 'Movie not found' });
+            } else {
+                res.status(200).json({ success: true, message: 'Movie deleted successfully', movie: deletedMovie });
+            }
+        });
+    });
+
+
+
 
 app.use('/', router);
 app.listen(process.env.PORT || 8080);
